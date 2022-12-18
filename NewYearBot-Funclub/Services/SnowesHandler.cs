@@ -84,7 +84,7 @@ public class SnowesHandler
                     
                     //Log.Debug("{StoredSecond} || {Username} || {Count}", currentUser.StoredSecond, currentUser.User.Username, count);
                     // await (chd as ISocketMessageChannel).SendBaseEmbed(user, Client, "Проверка", $"{currentUser.StoredSecond}"); // Дебагер, проверка XP
-                    var xpGrant = currentUser.StoredSecond;
+                    var xpGrant = currentUser.StoredSecond / 6;
                     await _users.ModifySnowball(currentUser.User.Id, xpGrant);
 
                 }
@@ -116,10 +116,10 @@ public class SnowesHandler
                 if (userL != null)
                 {
                     var userId = userL.User.Id;
-                    var xpGrant = Rand.Next(10, 20);
+                    var xpGrant = Rand.Next(1, 5);
                     await _users.ModifySnowball(userId, xpGrant);
                 
-                    userL.NewMessage = DateTime.Now.AddSeconds(Rand.Next(20, 30));
+                    userL.NewMessage = DateTime.Now.AddSeconds(60);
                     // await message.Channel.SendBaseEmbed(message.Author,Client,"XP выдан",$"ServerId: {serverId}\nUserId:{userId}\nxpgrant:{xpGrant}\ncd:{userL.NewMessage}\ncur:{DateTime.Now}"); // дебагер
 
                     

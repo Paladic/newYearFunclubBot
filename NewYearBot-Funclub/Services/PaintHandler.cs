@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Fergun.Interactive;
+using Infrastructure.DataAccessLayer;
 using Microsoft.Extensions.Configuration;
 using NewYearBot_Funclub.Utilites;
 using Serilog;
@@ -14,13 +15,15 @@ namespace NewYearBot_Funclub.Services
     public class PaintHandler
     {
         private readonly DiscordSocketClient _client;
+        private readonly Users _users;
         public static readonly List<List<PaintBLock>> PaintLists = new();
         private InteractiveService Interactive { get; }
 
-        public PaintHandler(DiscordSocketClient client,  InteractiveService interactive)
+        public PaintHandler(DiscordSocketClient client,  InteractiveService interactive, Users users)
         {
             _client = client;
             Interactive = interactive;
+            _users = users;
         }
         
         public async Task InitializeAsync ( )
@@ -182,6 +185,14 @@ namespace NewYearBot_Funclub.Services
                     
                 }
 
+                var snowers = await _users.GetSnowball(command.User.Id);
+                if (snowers < 1)
+                {
+                    var embed2 = await MessageHelper.CreateEmbedAsync(command.User, _client, "Раскраска невозможна",
+                        $"У тебя не хватает снежинок чтобы провести закраску");
+                    await command.FollowupAsync(embed: embed2, ephemeral: true);
+                    return;
+                }
                 
                 var emojiSquared = t.Data.CustomId switch
                 {
@@ -353,6 +364,8 @@ namespace NewYearBot_Funclub.Services
                     }
                     text += "\n";
                 }
+
+                await _users.ModifySnowball(command.User.Id, -1); 
                 await command.ModifyOriginalResponseAsync(x => x.Content = text);
                 await Program.MapLogger.SendMessageAsync(text);
             }

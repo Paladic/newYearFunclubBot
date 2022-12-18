@@ -25,6 +25,11 @@ namespace NewYearBot_Funclub.Services
             Log.Information("{Bot} запущен", _client.CurrentUser.Username);
             await Extensions.LoggerToChannel($"{_client.CurrentUser.Username} запущен", LogEventLevel.Information);
             
+            if (Extensions.CurUpTime == DateTimeOffset.FromUnixTimeSeconds(0))
+            {
+                Extensions.CurUpTime = DateTimeOffset.Now;
+            }
+            
         }
         
 

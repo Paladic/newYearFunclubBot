@@ -68,7 +68,7 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
             // похуй
         }
         embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Команда успешно выбрана!",
-            $"Поздравляю, теперь ты сражаешься за сторону: `${castle.Name}`");
+            $"Поздравляю, теперь ты сражаешься за сторону: `{castle.Name}`");
         await Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed);
     }
     
@@ -309,6 +309,44 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
         
         await Context.Interaction.ModifyOriginalResponseAsync(x => x.Components = new ComponentBuilder().Build());
 
+    }
+
+    [SlashCommand("бот-инфо", "просмотреть информацию о боте", runMode: RunMode.Async)]
+    [DefaultMemberPermissions(GuildPermission.ViewChannel)]
+    [EnabledInDm(false)]
+    public async Task BotInfo()
+    {
+        var dev = await Context.Client.GetUserAsync(219535226462928896);
+        var idea = await Context.Client.GetUserAsync(437540824524521472);
+        var fieldInfo = new EmbedFieldBuilder()
+            .WithName("Информация о боте")
+            .WithValue($"・ Аптайм: <t:{Extensions.CurUpTime.ToUnixTimeSeconds()}:f>\n" +
+                       $"・ Креатор: {idea.Mention} ({idea.Username}#{idea.Discriminator})\n" +
+                       $"・ Разработчик: {dev.Mention} ({dev.Username}#{dev.Discriminator})");
+
+        var embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Новогоднее веселье!", 
+            "Новогодний бот с функционалом снежной битвы и пиксель-батлом. \n" +
+            "・ Закрашивайте пиксели и рисуйте свои картины.\n" +
+            "・ Общайтесь в текстом или голосом и зарабатывайте снежки, с помощью которых закидывайте вражеские крепости!\n" +
+            "・ Уничтожайте врагов, обустраиваете крепости!\n" +
+            "・ Для начала игры напишите `/выбрать-команду`", 
+            //url: "https://media.discordapp.net/attachments/890682513503162420/1053792825092886608/onding-3320-f3966e1b069ae09269b14db2a4247d1a1x.png",
+            thumbUrl: "https://media.discordapp.net/attachments/890682513503162420/1053792874187210883/snowflake-threads-wool-coat.png", 
+            fields: new []{fieldInfo});
+
+        var buttons = new ComponentBuilder()
+            .WithButton("Ссылки на разработчика:", "asd1", ButtonStyle.Primary, disabled: true, row: 0)
+            .WithButton("Boosty ", null, ButtonStyle.Link, Emoji.Parse("🎁"), url: "https://boosty.to/paladic", row: 0)
+            .WithButton("Sbertips ", null, ButtonStyle.Link, Emoji.Parse("🪙"), url: "https://pay.mysbertips.ru/79338714", row: 0)
+            .WithButton("Ссылки на креатора", "asd", ButtonStyle.Primary, disabled: true, row: 1)
+            .WithButton("Sbertips ", null, ButtonStyle.Link, Emoji.Parse("🪙"), url: "https://pay.mysbertips.ru/50701604", row: 1)
+            .Build();
+
+        await Context.Interaction.ModifyOriginalResponseAsync(x =>
+        {
+            x.Embed = embed;
+            x.Components = buttons;
+        });
     }
     
 }

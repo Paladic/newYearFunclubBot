@@ -6,6 +6,7 @@ namespace NewYearBot_Funclub.Utilites;
 public class Extensions
 {
 
+    public static DateTimeOffset CurUpTime = DateTimeOffset.FromUnixTimeSeconds(0);
     public static async Task LoggerToChannel(string message, LogEventLevel severity, string error = null)
         {
             Color color = Color.Default;

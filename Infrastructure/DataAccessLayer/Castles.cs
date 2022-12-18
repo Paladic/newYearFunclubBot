@@ -21,7 +21,7 @@ public class Castles
             .FirstOrDefaultAsync(x => x.Name == name);
 
         if (castle == null)
-            context.Add(new Castle { Name = name, RoleId = roleId});
+            context.Add(new Castle { Name = name, RoleId = roleId, CastleSize = 100});
         await context.SaveChangesAsync();
     }
     
