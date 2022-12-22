@@ -14,13 +14,15 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly Users _users;
     private readonly Castles _castles;
+    private readonly BlockChannels _blockChannels;
     private InteractiveService Interactive { get; }
         
-    public AdminCommands(Users users, Castles castles, InteractiveService interactive)
+    public AdminCommands(Users users, Castles castles, InteractiveService interactive, BlockChannels blockChannels)
     {
         _users = users;
         _castles = castles;
         Interactive = interactive;
+        _blockChannels = blockChannels;
     }
 
     [SlashCommand("оп-сказать", "отправить сообщение в нужный канал", runMode: RunMode.Async)]
@@ -90,7 +92,6 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
         await _castles.NewCastle("Красная", redRole.Id);
         await _castles.NewCastle("Синяя", blueRole.Id);
-        await _castles.NewCastle("Зеленая", greenRole.Id);
 
         embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Готово!",
             "Мы готовы к запуску, вроде бы");
@@ -191,6 +192,29 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
         string output = Newtonsoft.Json.JsonConvert.SerializeObject(jsonObj, Newtonsoft.Json.Formatting.Indented);
         File.WriteAllText("appsettings.json", output);
         
+    }
+
+    [SlashCommand("оп-канал-настройка", "настраиваете канал на снежки", runMode: RunMode.Async)]
+    [DefaultMemberPermissions(GuildPermission.Administrator)]
+    [EnabledInDm(false)]
+    public async Task DisableCommands([Summary("канал", "с каким каналом работаем")]SocketGuildChannel channel, 
+        [Choice("отключить-снежки", "disable"), Choice("включить-снежки", "enabled"), 
+         Summary("переключатель", "включаем или выключаем снежки в канале")]string pereck)
+    {
+        if (pereck == "disable")
+        {
+            await _blockChannels.NewChannel(channel.Id);
+            var embed1 = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Канал отключен",
+                "теперь в канале не будут даваться снежки");
+            await Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed1);
+        }
+        else
+        {
+            var embed2 = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Канал включен",
+                "теперь в канале будут даваться снежки");
+            await _blockChannels.DeleteChannel(channel.Id);
+            await Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed2);
+        }
     }
     
 }

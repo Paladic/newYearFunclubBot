@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net.Mime;
 using System.Reflection;
 using Discord;
 using Discord.Commands;
@@ -28,7 +29,7 @@ namespace NewYearBot_Funclub
      public static DiscordWebhookClient MapLogger;
      public static IConfiguration config;
      
-        static void Main ( string[] args )
+        static void Main ()
         {
             // One of the more flexable ways to access the configuration data is to use the Microsoft's Configuration model,
             // this way we can avoid hard coding the environment secrets. I opted to use the Json and environment variable providers here.
@@ -113,7 +114,7 @@ namespace NewYearBot_Funclub
                 
                 if ((message.Exception != null && message.Exception.Message != null) &&
                     ((message.Exception.Message == "Server missed last heartbeat" ||
-                     message.Exception.Message.StartsWith("Server missed last heartbeat"))))
+                      message.Exception.Message.StartsWith("Server missed last heartbeat"))))
                 {
                     //Log.Write(severity, message.Exception, "[{Source}] {Message}", message.Source, message.Message);
                     
@@ -181,8 +182,9 @@ namespace NewYearBot_Funclub
                 .AddSingleton<AdminCommands>()
                 .AddSingleton<Users>()
                 .AddSingleton<Castles>()
+                .AddSingleton<BlockChannels>()
                 .AddSingleton<InteractiveService>()
-                
+
                 .AddDbContextFactory<DiscordBotDbContext>(options => 
                     options.UseMySql(_configuration.GetConnectionString("Default"),
                         new MySqlServerVersion(new Version(8,0,28)), 

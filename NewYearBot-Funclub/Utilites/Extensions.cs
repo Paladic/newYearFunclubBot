@@ -7,6 +7,7 @@ public class Extensions
 {
 
     public static DateTimeOffset CurUpTime = DateTimeOffset.FromUnixTimeSeconds(0);
+    public static List<SnowesStorage.UserInfo> UsersList = new();
     public static async Task LoggerToChannel(string message, LogEventLevel severity, string error = null)
         {
             Color color = Color.Default;

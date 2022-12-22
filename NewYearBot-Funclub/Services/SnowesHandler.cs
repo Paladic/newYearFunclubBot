@@ -11,18 +11,24 @@ public class SnowesHandler
     public static readonly List<SnowesStorage.TextSnowes> TextSnowes = new();
     public static readonly List<SnowesStorage.VoiceSnowes> VoiceSnowes = new();
     private readonly Users _users;
+    private readonly BlockChannels _blockChannels;
     private readonly Random Rand = new();
 
 
-    public SnowesHandler(DiscordSocketClient client, Users users)
+    public SnowesHandler(DiscordSocketClient client, Users users, BlockChannels blockChannels)
     {
         _client = client;
         _users = users;
+        _blockChannels = blockChannels;
     }
  
     public async Task XpVoiceSystem(SocketUser user, SocketVoiceState before, SocketVoiceState after)
         {
             if (user.IsBot) return;
+            var a = await _blockChannels.GetChannel(before.VoiceChannel.Id);
+            var b = await _blockChannels.GetChannel(after.VoiceChannel.Id);
+            if(before.VoiceChannel.Id == a || after.VoiceChannel.Id == b)
+                return;
             if (after.VoiceChannel != null)
             {
                 if (VoiceSnowes.Count(x => x.User == user as SocketGuildUser) == 0)
@@ -102,8 +108,11 @@ public class SnowesHandler
             if (socketMessage.Author.IsBot || socketMessage.Author.IsWebhook) return;
             if (socketMessage.Channel.GetType().ToString() == "Discord.WebSocket.SocketDMChannel") return;
             
-           
-            if(!TextSnowes.Contains(new SnowesStorage.TextSnowes{User = message.Author as SocketGuildUser}))
+            var b = await _blockChannels.GetChannel(socketMessage.Channel.Id);
+            if(socketMessage.Channel.Id == b)
+                return;
+            
+            if(TextSnowes.All(x => x.User != message.Author))
                 TextSnowes.Add(new SnowesStorage.TextSnowes{User = message.Author as SocketGuildUser, NewMessage = DateTime.Now});
             
             if (TextSnowes

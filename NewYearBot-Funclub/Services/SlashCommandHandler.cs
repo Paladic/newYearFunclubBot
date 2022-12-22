@@ -37,7 +37,6 @@ namespace NewYearBot_Funclub.Services
         
         private async Task SlashCommandExecuted (SlashCommandInfo arg1, IInteractionContext arg2, IResult arg3)
         {
-            Log.Information("Command: {arg1} ({arg2})", arg2.Interaction.Id, arg1.Name);
             // await arg2.Interaction.DeferAsync(false);
             string ermsg = "";
             if (!arg3.IsSuccess)

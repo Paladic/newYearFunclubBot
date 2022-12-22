@@ -14,4 +14,5 @@ public class DiscordBotDbContext : DbContext
     
     public DbSet<User> Users { get; set; }
     public DbSet<Castle> Castles { get; set; }
+    public DbSet<BlockChannel> BlockChannels { get; set; }
 }

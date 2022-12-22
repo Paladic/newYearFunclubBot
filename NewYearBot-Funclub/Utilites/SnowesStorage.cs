@@ -18,4 +18,11 @@ public class SnowesStorage
         public bool Mark;
         public SocketVoiceChannel CurrentVoice;
     }
+
+    public class UserInfo
+    {
+        public SocketGuildUser User;
+        public long AttackCooldown;
+        public long PixelCooldown;
+    }
 }

@@ -5,6 +5,7 @@ using Fergun.Interactive;
 using Infrastructure.DataAccessLayer;
 using Infrastructure.Models;
 using NewYearBot_Funclub.Utilites;
+using Serilog;
 
 namespace NewYearBot_Funclub.Commands;
 
@@ -27,15 +28,13 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     [EnabledInDm(false)]
     public async Task ChooseYourTeam([Choice("Красная", 1),
                                             Choice("Синяя", 2),
-                                            Choice("Зелёная", 3),
-                                           Summary("Команда", "за кого сражаемся?")]
-        ulong team)
+                                            Summary("Команда", "за кого сражаемся?")]ulong team)
     {
         var userTeam = await _users.GetCastleId(Context.User.Id);
         Embed embed;
         if (userTeam != 0)
         {
-            embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Ты куда собрался, дизертир",
+            embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Ты куда собрался, дезертир",
                 "Извини, но команду сменить нельзя!");
             await Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed);
             return;
@@ -48,8 +47,8 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
         {
             castleCount += Context.Guild.GetRole(castleR.RoleId).Members.Count();
         }
-
-        if (castleCount / 3 < Context.Guild.GetRole(castle.RoleId).Members.Count() &&
+        
+        if ((castleCount / 2) < Context.Guild.GetRole(castle.RoleId).Members.Count() &&
             Context.Guild.GetRole(castle.RoleId).Members.Count() > 5)
         {
             embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client,
@@ -77,7 +76,7 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     [EnabledInDm(false)]
     public async Task AttackEnemyTeamAsync([Choice("Красная", 1), 
                                             Choice("Синяя", 2), 
-                                            Choice("Зелёная", 3), Summary("Команда", "кого будет атковать")]ulong team)
+                                            Summary("Команда", "кого будет атковать")]ulong team)
     {
         var userTeam = await _users.GetCastleId(Context.User.Id);
         Embed embed;
@@ -96,6 +95,14 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
             await Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed);
             return;
         }
+        
+        if (await _users.GetSnowball(Context.User.Id) < 1)
+        {
+            embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Наберись снежков",
+                "Слушай, для того чтобы в кого-то кинуть снежок, он тебе, как минимум нужен, а пока у тебя их нет, поэтому, приходи позже");
+            await Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed);
+            return;
+        }
 
         if (await _users.GetDamageEnd(Context.User.Id) > (ulong)DateTimeOffset.Now.ToUnixTimeSeconds())
         {
@@ -105,6 +112,33 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
+        if (Extensions.UsersList.FirstOrDefault(x => x.User.Id == Context.User.Id) != null &&
+            Extensions.UsersList.FirstOrDefault(x => x.User.Id == Context.User.Id).AttackCooldown >
+            DateTimeOffset.Now.ToUnixTimeSeconds())
+        {
+            embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Рано стрелять солдат!",
+                $"Прости, но кидать снежки пока рано, попробуй еще раз" +
+                $" <t:{Extensions.UsersList.FirstOrDefault(x => x.User.Id == Context.User.Id).AttackCooldown}:R>");
+            await Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed);
+            return;
+        }
+        
+        if (Extensions.UsersList.FirstOrDefault(x => x.User.Id == Context.User.Id) == null)
+        {
+            Extensions.UsersList.Add(new SnowesStorage.UserInfo()
+            {
+                AttackCooldown = (DateTimeOffset.Now + TimeSpan.FromMinutes(1)).ToUnixTimeSeconds() , 
+                User = (SocketGuildUser) Context.User, 
+                PixelCooldown = 0
+                
+            });
+        }
+        else
+        {
+            Extensions.UsersList.FirstOrDefault(x => x.User.Id == Context.User.Id).AttackCooldown =
+                (DateTimeOffset.Now + TimeSpan.FromMinutes(1)).ToUnixTimeSeconds();
+        }
+        
         var castle = await _castles.GetCastleFromId(team);
         await _users.ModifySnowball(Context.User.Id, -1);
 
@@ -128,12 +162,12 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
         else
         {
             var chance = rnd.Next(0, 100);
+            await _castles.ModifySnowmanCount(team, -1);
             if (chance >= 30)
             {
                 // успех
                 if (castle.SnowmanCount > 0)
                 {
-                    await _castles.ModifySnowmanCount(team, -1);
                     embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client, "Попадание!",
                         "Мы попали, но они спаслись с помощью снеговика!");
                     await Context.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed);
@@ -233,7 +267,7 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     [EnabledInDm(false)]
     public async Task ProfileCastleAsync([Choice("Красная", 1), 
                                           Choice("Синяя", 2), 
-                                          Choice("Зелёная", 3), Summary("Команда", "кого будет атковать")]ulong team)
+                                          Summary("Команда", "кого будет атковать")]ulong team)
     {
         var endDate = DateTimeOffset.Now + TimeSpan.FromMinutes(10);
 
@@ -258,13 +292,13 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
                 .WithValue($"{roleCount} <@&{castleInfo.RoleId}>");
 
             
-            var castleSizeDisable = userTeam == null || (userTeam.CastleId != castleInfo.Id || userTeam.Snowball < 10 || userTeam.DamageEnd >  (ulong) DateTimeOffset.Now.ToUnixTimeSeconds());
-            var snowballCountDisable = userTeam == null || (castleInfo.SnowmanCount >= 10 || userTeam.CastleId != castleInfo.Id || userTeam.Snowball < 15 || userTeam.DamageEnd >  (ulong) DateTimeOffset.Now.ToUnixTimeSeconds());
+            var castleSizeDisable = userTeam == null || (userTeam.CastleId != castleInfo.Id || userTeam.Snowball < 50 || userTeam.DamageEnd >  (ulong) DateTimeOffset.Now.ToUnixTimeSeconds());
+            var snowballCountDisable = userTeam == null || (castleInfo.SnowmanCount >= 10 || userTeam.CastleId != castleInfo.Id || userTeam.Snowball < 100 || userTeam.DamageEnd >  (ulong) DateTimeOffset.Now.ToUnixTimeSeconds());
 
             var buttons = new ComponentBuilder()
-                .WithButton("Слепить ком (10 снежков)", "add-castlesize", ButtonStyle.Success,
+                .WithButton("Слепить ком (50 снежков)", "add-castlesize", ButtonStyle.Success,
                     disabled: castleSizeDisable)
-                .WithButton("Слепить снеговиков (15 снежков)", "add-snowman", ButtonStyle.Success,
+                .WithButton("Слепить снеговиков (100 снежков)", "add-snowman", ButtonStyle.Success,
                     disabled: snowballCountDisable)
                 .Build();
 
@@ -288,14 +322,14 @@ public class UserCommands : InteractionModuleBase<SocketInteractionContext>
                 switch (nts.Value.Data.CustomId)
                 {
                     case "add-castlesize":
-                        await _users.ModifySnowball(Context.User.Id, -10);
+                        await _users.ModifySnowball(Context.User.Id, -50);
                         await _castles.ModifyCastleSize(team, 1 * 10);
                         embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client,
                             "Мы успешно слепили ком", $"Ура! Теперь у нашего замка {castleInfo.CastleSize / 10 + 1} комов.");
                         await Context.Interaction.FollowupAsync(embed: embed,  ephemeral: true);
                         break;
                     case "add-snowman":
-                        await _users.ModifySnowball(Context.User.Id, -15);
+                        await _users.ModifySnowball(Context.User.Id, -100);
                         await _castles.ModifySnowmanCount(team, 1);
                         embed = await MessageHelper.CreateEmbedAsync(Context.User, Context.Client,
                             "Мы успешно слепили снеговика", $"Ура! Теперь у нашего замка {castleInfo.SnowmanCount + 1} снеговиков.");

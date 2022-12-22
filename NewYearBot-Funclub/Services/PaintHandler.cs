@@ -169,7 +169,7 @@ namespace NewYearBot_Funclub.Services
                 string text = ":zero::one::two::three::four::five::six::seven::eight::nine::keycap_ten:\n";
                 if (PaintLists.Count == 0)
                 {
-                    var newMsg = message.Split("\n");
+                    var newMsg = message.Replace("�", "").Split("\n");
                     for (var index = 1; index < newMsg.Length; index++)
                     {
                         var nm = newMsg[index];
@@ -192,6 +192,33 @@ namespace NewYearBot_Funclub.Services
                         $"У тебя не хватает снежинок чтобы провести закраску");
                     await command.FollowupAsync(embed: embed2, ephemeral: true);
                     return;
+                }
+                
+                if (Extensions.UsersList.FirstOrDefault(x => x.User.Id == command.User.Id) != null &&
+                    Extensions.UsersList.FirstOrDefault(x => x.User.Id == command.User.Id).PixelCooldown >
+                    DateTimeOffset.Now.ToUnixTimeSeconds())
+                {
+                    var tembed = await MessageHelper.CreateEmbedAsync(command.User, _client, "Убери кисточку!",
+                        $"Прости, но менять цвета на этом поле еще рановато, попробуй еще раз" +
+                        $" <t:{Extensions.UsersList.FirstOrDefault(x => x.User.Id == command.User.Id).PixelCooldown}:R>");
+                    await command.FollowupAsync(embed: tembed, ephemeral:true);
+                    return;
+                }
+        
+                if (Extensions.UsersList.FirstOrDefault(x => x.User.Id == command.User.Id) == null)
+                {
+                    Extensions.UsersList.Add(new SnowesStorage.UserInfo()
+                    {
+                        PixelCooldown = (DateTimeOffset.Now + TimeSpan.FromMinutes(1)).ToUnixTimeSeconds() , 
+                        User = (SocketGuildUser) command.User, 
+                        AttackCooldown = 0
+                
+                    });
+                }
+                else
+                {
+                    Extensions.UsersList.FirstOrDefault(x => x.User.Id == command.User.Id).PixelCooldown =
+                        (DateTimeOffset.Now + TimeSpan.FromMinutes(1)).ToUnixTimeSeconds();
                 }
                 
                 var emojiSquared = t.Data.CustomId switch
