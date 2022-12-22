@@ -19,6 +19,13 @@
 CREATE DATABASE IF NOT EXISTS `newyearbot` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `newyearbot`;
 
+-- Дамп структуры для таблица newyearbot.blockchannels
+CREATE TABLE IF NOT EXISTS `blockchannels` (
+  `Id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 -- Дамп структуры для таблица newyearbot.castles
 CREATE TABLE IF NOT EXISTS `castles` (
   `Id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -46,9 +53,10 @@ CREATE TABLE IF NOT EXISTS `__efmigrationshistory` (
   PRIMARY KEY (`MigrationId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Дамп данных таблицы newyearbot.__efmigrationshistory: ~1 rows (приблизительно)
+-- Дамп данных таблицы newyearbot.__efmigrationshistory: ~0 rows (приблизительно)
 REPLACE INTO `__efmigrationshistory` (`MigrationId`, `ProductVersion`) VALUES
-	('20221216175620_firstMigration', '6.0.12');
+	('20221216175620_firstMigration', '6.0.12'),
+	('20221220132413_partMigration', '6.0.12');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
